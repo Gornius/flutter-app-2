@@ -75,15 +75,37 @@ class _HomeScreenState extends State<HomeScreen> {
       body: _isLoadingData
           ? const Center(child: CircularProgressIndicator())
           : _buildPhoneList(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _insertPhoneDebug(null),
-        child: const Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: "btn_reset_db",
+            onPressed: () {
+              PhoneDatabase.resetDatabase();
+              _loadPhoneList();
+              build(context);
+            },
+            child: const Icon(Icons.restore),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          FloatingActionButton(
+            //onPressed: () => _insertPhoneDebug(null),
+            heroTag: "btn_add_record",
+            onPressed: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PhoneEditPage(phoneId: 0),
+                  ));
+            },
+            child: const Icon(Icons.add),
+          ),
+        ],
       ),
     );
   }
-
-  final TextEditingController _phoneNameFieldController =
-      TextEditingController();
 
   _insertPhoneDebug(int? phoneId) {
     PhoneDatabase.insertPhone(Phone(
@@ -95,6 +117,57 @@ class _HomeScreenState extends State<HomeScreen> {
         phoneAvatar: "phoneAvatar"));
     _loadPhoneList();
     build(context);
+  }
+}
+
+class PhoneEditPage extends StatefulWidget {
+  const PhoneEditPage({Key? key, required this.phoneId}) : super(key: key);
+  final int phoneId;
+
+  @override
+  State<PhoneEditPage> createState() => _PhoneEditPageState();
+}
+
+class _PhoneEditPageState extends State<PhoneEditPage> {
+  final formKey = GlobalKey<FormState>();
+  final phoneManufacturerKey = GlobalKey<FormFieldState>();
+  final phoneModelKey = GlobalKey<FormFieldState>();
+  final phoneSoftwareVersionKey = GlobalKey<FormFieldState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Add record"),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Form(
+          child: Column(
+            children: [
+              TextField(
+                key: phoneManufacturerKey,
+                decoration: const InputDecoration(
+                  label: Text("Phone Manufacturer"),
+                ),
+              ),
+              TextField(
+                key: phoneModelKey,
+                decoration: const InputDecoration(
+                  label: Text("Phone model"),
+                ),
+              ),
+              TextField(
+                key: phoneSoftwareVersionKey,
+                decoration: const InputDecoration(
+                  label: Text("Software version"),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
