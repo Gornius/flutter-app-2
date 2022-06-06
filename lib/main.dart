@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       ),
       darkTheme: ThemeData(
         colorScheme: const ColorScheme.dark().copyWith(
-          secondary: Colors.purple,
+          secondary: Colors.amber,
         ),
       ),
       home: const HomeScreen(),
@@ -57,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return ListView.builder(
       itemCount: _phoneList.length,
       itemBuilder: (context, i) => Card(
-        color: Colors.lightBlueAccent,
+        color: Colors.purple,
         margin: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
         child: ListTile(
           title: Text(_phoneList[i].name),
@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ? const Center(child: CircularProgressIndicator())
           : _buildPhoneList(),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showPhoneForm(null),
+        onPressed: () => _insertPhoneDebug(null),
         child: const Icon(Icons.add),
       ),
     );
@@ -85,12 +85,16 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _phoneNameFieldController =
       TextEditingController();
 
-  _showPhoneForm(int? phoneId) {
-    if (phoneId != null) {
-      final existingPhone =
-          _phoneList.firstWhere((element) => element.id == phoneId);
-      _phoneNameFieldController.text = existingPhone.name;
-    }
+  _insertPhoneDebug(int? phoneId) {
+    PhoneDatabase.insertPhone(Phone(
+        id: 0,
+        name: "name",
+        model: "model",
+        manufacturer: "manufacturer",
+        softwareVersion: "softwareVersion",
+        phoneAvatar: "phoneAvatar"));
+    _loadPhoneList();
+    build(context);
   }
 }
 
