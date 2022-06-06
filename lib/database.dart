@@ -101,4 +101,12 @@ class PhoneDatabase {
 
     return newItemId;
   }
+
+  static Future<int> modifyPhone(Phone phone) async {
+    final phoneDatabase = await openPhoneDatabase();
+
+    await phoneDatabase.update(tableName, phone.toMapNoId(),
+        where: "id = ${phone.id}");
+    return phone.id;
+  }
 }

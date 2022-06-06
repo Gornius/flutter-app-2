@@ -1,4 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'database.dart';
 import 'dart:developer';
 
@@ -56,11 +59,26 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildPhoneList() {
     return ListView.builder(
       itemCount: _phoneList.length,
-      itemBuilder: (context, i) => Card(
-        color: Colors.purple,
-        margin: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
-        child: ListTile(
-          title: Text(_phoneList[i].name),
+      itemBuilder: (context, i) => GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PhoneEditPage(
+                phone: _phoneList[i],
+              ),
+            ),
+          ).then((value) {
+            _loadPhoneList();
+            build(context);
+          });
+        },
+        child: Card(
+          color: Colors.purple,
+          margin: const EdgeInsets.only(top: 16.0, left: 16.0, right: 16.0),
+          child: ListTile(
+            title: Text(_phoneList[i].name),
+          ),
         ),
       ),
     );
@@ -95,10 +113,14 @@ class _HomeScreenState extends State<HomeScreen> {
             heroTag: "btn_add_record",
             onPressed: () {
               Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PhoneEditPage(phoneId: 0),
-                  ));
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PhoneEditPage(phone: null),
+                ),
+              ).then((value) {
+                _loadPhoneList();
+                build(context);
+              });
             },
             child: const Icon(Icons.add),
           ),
@@ -121,8 +143,8 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class PhoneEditPage extends StatefulWidget {
-  const PhoneEditPage({Key? key, required this.phoneId}) : super(key: key);
-  final int phoneId;
+  const PhoneEditPage({Key? key, required this.phone}) : super(key: key);
+  final Phone? phone;
 
   @override
   State<PhoneEditPage> createState() => _PhoneEditPageState();
@@ -130,39 +152,124 @@ class PhoneEditPage extends StatefulWidget {
 
 class _PhoneEditPageState extends State<PhoneEditPage> {
   final formKey = GlobalKey<FormState>();
-  final phoneManufacturerKey = GlobalKey<FormFieldState>();
-  final phoneModelKey = GlobalKey<FormFieldState>();
-  final phoneSoftwareVersionKey = GlobalKey<FormFieldState>();
+  // final phoneManufacturerKey = GlobalKey<FormFieldState>();
+  // final phoneModelKey = GlobalKey<FormFieldState>();
+  // final phoneSoftwareVersionKey = GlobalKey<FormFieldState>();
+  late TextEditingController _manufacturerController;
+  late TextEditingController _modelController;
+  late TextEditingController _softwareVersionController;
+  String? _imageBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.phone?.phoneAvatar != "") {
+      _imageBytes = widget.phone?.phoneAvatar;
+    }
+    _manufacturerController =
+        TextEditingController(text: widget.phone?.manufacturer);
+    _modelController = TextEditingController(text: widget.phone?.model);
+    _softwareVersionController =
+        TextEditingController(text: widget.phone?.softwareVersion);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add record"),
+        title: (widget.phone == null)
+            ? const Text("Add record")
+            : const Text("Edit record"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Form(
+          key: formKey,
           child: Column(
             children: [
-              TextField(
-                key: phoneManufacturerKey,
+              TextFormField(
+                // key: phoneManufacturerKey,
+                controller: _manufacturerController,
                 decoration: const InputDecoration(
                   label: Text("Phone Manufacturer"),
                 ),
+                validator: (value) {
+                  if (value != "") {
+                    return null;
+                  } else {
+                    return "Phone manufacturer must not be empty";
+                  }
+                },
               ),
-              TextField(
-                key: phoneModelKey,
+              TextFormField(
+                //key: phoneModelKey,
+                controller: _modelController,
                 decoration: const InputDecoration(
                   label: Text("Phone model"),
                 ),
+                validator: (value) {
+                  if (value != "") {
+                    return null;
+                  } else {
+                    return "Phone model must not be empty";
+                  }
+                },
               ),
-              TextField(
-                key: phoneSoftwareVersionKey,
+              TextFormField(
+                // key: phoneSoftwareVersionKey,
+                controller: _softwareVersionController,
                 decoration: const InputDecoration(
                   label: Text("Software version"),
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: (_imageBytes == null
+                    ? Container()
+                    : Image.memory(base64Decode(_imageBytes!))),
+              ),
+              ElevatedButton(
+                child: const Text("Pick Avatar"),
+                onPressed: () async {
+                  var pickedFile = await ImagePicker().pickImage(
+                    source: ImageSource.gallery,
+                  );
+                  if (pickedFile != null) {
+                    var fileBytes = await pickedFile.readAsBytes();
+                    setState(() {
+                      _imageBytes = base64Encode(fileBytes);
+                    });
+                  }
+                },
+              ),
+              ElevatedButton(
+                  child: const Text("Save"),
+                  onPressed: () {
+                    if (formKey.currentState!.validate()) {
+                      if (widget.phone?.id == null) {
+                        PhoneDatabase.insertPhone(Phone(
+                            id: widget.phone?.id ?? 0,
+                            name:
+                                "${_manufacturerController.text} ${_modelController.text}",
+                            model: _modelController.text,
+                            manufacturer: _manufacturerController.text,
+                            softwareVersion: _softwareVersionController.text,
+                            //phoneAvatar: _imageFile.toString()));
+                            phoneAvatar: _imageBytes ?? ""));
+                        Navigator.pop(context);
+                      } else {
+                        PhoneDatabase.modifyPhone(Phone(
+                            id: widget.phone!.id,
+                            name:
+                                "${_manufacturerController.text} ${_modelController.text}",
+                            model: _modelController.text,
+                            manufacturer: _manufacturerController.text,
+                            softwareVersion: _softwareVersionController.text,
+                            phoneAvatar: _imageBytes ?? ""));
+                        Navigator.pop(context);
+                      }
+                    }
+                  }),
             ],
           ),
         ),
