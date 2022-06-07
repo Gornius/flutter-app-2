@@ -61,7 +61,7 @@ class PhoneDatabase {
       '$manufacturerColumn TEXT,'
       '$modelColumn TEXT,'
       '$softwareVersionColumn TEXT,'
-      '$phoneAvatarColumn TEXT);';
+      '$phoneAvatarColumn TEXT)';
 
   static Future<Database> openPhoneDatabase() async {
     return openDatabase(

@@ -1,7 +1,7 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'database.dart';
 import 'dart:developer';
 
@@ -128,18 +128,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  _insertPhoneDebug(int? phoneId) {
-    PhoneDatabase.insertPhone(Phone(
-        id: 0,
-        name: "name",
-        model: "model",
-        manufacturer: "manufacturer",
-        softwareVersion: "softwareVersion",
-        phoneAvatar: "phoneAvatar"));
-    _loadPhoneList();
-    build(context);
-  }
 }
 
 class PhoneEditPage extends StatefulWidget {
@@ -158,13 +146,13 @@ class _PhoneEditPageState extends State<PhoneEditPage> {
   late TextEditingController _manufacturerController;
   late TextEditingController _modelController;
   late TextEditingController _softwareVersionController;
-  String? _imageBytes;
+  String? _imagePath;
 
   @override
   void initState() {
     super.initState();
     if (widget.phone?.phoneAvatar != "") {
-      _imageBytes = widget.phone?.phoneAvatar;
+      _imagePath = widget.phone?.phoneAvatar;
     }
     _manufacturerController =
         TextEditingController(text: widget.phone?.manufacturer);
@@ -224,9 +212,9 @@ class _PhoneEditPageState extends State<PhoneEditPage> {
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: (_imageBytes == null
+                child: (_imagePath == null
                     ? Container()
-                    : Image.memory(base64Decode(_imageBytes!))),
+                    : Image.file(File(_imagePath!))),
               ),
               ElevatedButton(
                 child: const Text("Pick Avatar"),
@@ -235,10 +223,15 @@ class _PhoneEditPageState extends State<PhoneEditPage> {
                     source: ImageSource.gallery,
                   );
                   if (pickedFile != null) {
-                    var fileBytes = await pickedFile.readAsBytes();
+                    final String path =
+                        (await getApplicationDocumentsDirectory()).path +
+                            "/" +
+                            pickedFile.name;
+                    await pickedFile.saveTo(path);
                     setState(() {
-                      _imageBytes = base64Encode(fileBytes);
+                      _imagePath = path;
                     });
+                    print("--------- $path");
                   }
                 },
               ),
@@ -255,7 +248,7 @@ class _PhoneEditPageState extends State<PhoneEditPage> {
                             manufacturer: _manufacturerController.text,
                             softwareVersion: _softwareVersionController.text,
                             //phoneAvatar: _imageFile.toString()));
-                            phoneAvatar: _imageBytes ?? ""));
+                            phoneAvatar: _imagePath ?? ""));
                         Navigator.pop(context);
                       } else {
                         PhoneDatabase.modifyPhone(Phone(
@@ -265,7 +258,7 @@ class _PhoneEditPageState extends State<PhoneEditPage> {
                             model: _modelController.text,
                             manufacturer: _manufacturerController.text,
                             softwareVersion: _softwareVersionController.text,
-                            phoneAvatar: _imageBytes ?? ""));
+                            phoneAvatar: _imagePath ?? ""));
                         Navigator.pop(context);
                       }
                     }
@@ -273,52 +266,6 @@ class _PhoneEditPageState extends State<PhoneEditPage> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
