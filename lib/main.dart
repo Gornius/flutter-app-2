@@ -169,101 +169,115 @@ class _PhoneEditPageState extends State<PhoneEditPage> {
             ? const Text("Add record")
             : const Text("Edit record"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Form(
-          key: formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                // key: phoneManufacturerKey,
-                controller: _manufacturerController,
-                decoration: const InputDecoration(
-                  label: Text("Phone Manufacturer"),
-                ),
-                validator: (value) {
-                  if (value != "") {
-                    return null;
-                  } else {
-                    return "Phone manufacturer must not be empty";
-                  }
-                },
-              ),
-              TextFormField(
-                //key: phoneModelKey,
-                controller: _modelController,
-                decoration: const InputDecoration(
-                  label: Text("Phone model"),
-                ),
-                validator: (value) {
-                  if (value != "") {
-                    return null;
-                  } else {
-                    return "Phone model must not be empty";
-                  }
-                },
-              ),
-              TextFormField(
-                // key: phoneSoftwareVersionKey,
-                controller: _softwareVersionController,
-                decoration: const InputDecoration(
-                  label: Text("Software version"),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: (_imagePath == null
-                    ? Container()
-                    : Image.file(File(_imagePath!))),
-              ),
-              ElevatedButton(
-                child: const Text("Pick Avatar"),
-                onPressed: () async {
-                  var pickedFile = await ImagePicker().pickImage(
-                    source: ImageSource.gallery,
-                  );
-                  if (pickedFile != null) {
-                    final String path =
-                        (await getApplicationDocumentsDirectory()).path +
-                            "/" +
-                            pickedFile.name;
-                    await pickedFile.saveTo(path);
-                    setState(() {
-                      _imagePath = path;
-                    });
-                    print("--------- $path");
-                  }
-                },
-              ),
-              ElevatedButton(
-                  child: const Text("Save"),
-                  onPressed: () {
-                    if (formKey.currentState!.validate()) {
-                      if (widget.phone?.id == null) {
-                        PhoneDatabase.insertPhone(Phone(
-                            id: widget.phone?.id ?? 0,
-                            name:
-                                "${_manufacturerController.text} ${_modelController.text}",
-                            model: _modelController.text,
-                            manufacturer: _manufacturerController.text,
-                            softwareVersion: _softwareVersionController.text,
-                            //phoneAvatar: _imageFile.toString()));
-                            phoneAvatar: _imagePath ?? ""));
-                        Navigator.pop(context);
-                      } else {
-                        PhoneDatabase.modifyPhone(Phone(
-                            id: widget.phone!.id,
-                            name:
-                                "${_manufacturerController.text} ${_modelController.text}",
-                            model: _modelController.text,
-                            manufacturer: _manufacturerController.text,
-                            softwareVersion: _softwareVersionController.text,
-                            phoneAvatar: _imagePath ?? ""));
-                        Navigator.pop(context);
-                      }
+      floatingActionButton: (widget.phone == null)
+          ? Column()
+          : FloatingActionButton(
+              child: const Icon(Icons.delete),
+              onPressed: () {
+                PhoneDatabase.deletePhone(widget.phone!);
+                Navigator.pop(context);
+              },
+            ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Form(
+            key: formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  // key: phoneManufacturerKey,
+                  controller: _manufacturerController,
+                  decoration: const InputDecoration(
+                    label: Text("Phone Manufacturer"),
+                  ),
+                  validator: (value) {
+                    if (value != "") {
+                      return null;
+                    } else {
+                      return "Phone manufacturer must not be empty";
                     }
-                  }),
-            ],
+                  },
+                ),
+                TextFormField(
+                  //key: phoneModelKey,
+                  controller: _modelController,
+                  decoration: const InputDecoration(
+                    label: Text("Phone model"),
+                  ),
+                  validator: (value) {
+                    if (value != "") {
+                      return null;
+                    } else {
+                      return "Phone model must not be empty";
+                    }
+                  },
+                ),
+                TextFormField(
+                  // key: phoneSoftwareVersionKey,
+                  controller: _softwareVersionController,
+                  decoration: const InputDecoration(
+                    label: Text("Software version"),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: (_imagePath == null
+                      ? Container()
+                      : Image.file(
+                          File(_imagePath!),
+                          height: MediaQuery.of(context).size.height * 0.5,
+                        )),
+                ),
+                ElevatedButton(
+                  child: const Text("Pick Avatar"),
+                  onPressed: () async {
+                    var pickedFile = await ImagePicker().pickImage(
+                      source: ImageSource.gallery,
+                    );
+                    if (pickedFile != null) {
+                      final String path =
+                          (await getApplicationDocumentsDirectory()).path +
+                              "/" +
+                              pickedFile.name;
+                      await pickedFile.saveTo(path);
+                      setState(() {
+                        _imagePath = path;
+                      });
+                      print("--------- $path");
+                    }
+                  },
+                ),
+                ElevatedButton(
+                    child: const Text("Save"),
+                    onPressed: () {
+                      if (formKey.currentState!.validate()) {
+                        if (widget.phone?.id == null) {
+                          PhoneDatabase.insertPhone(Phone(
+                              id: widget.phone?.id ?? 0,
+                              name:
+                                  "${_manufacturerController.text} ${_modelController.text}",
+                              model: _modelController.text,
+                              manufacturer: _manufacturerController.text,
+                              softwareVersion: _softwareVersionController.text,
+                              //phoneAvatar: _imageFile.toString()));
+                              phoneAvatar: _imagePath ?? ""));
+                          Navigator.pop(context);
+                        } else {
+                          PhoneDatabase.modifyPhone(Phone(
+                              id: widget.phone!.id,
+                              name:
+                                  "${_manufacturerController.text} ${_modelController.text}",
+                              model: _modelController.text,
+                              manufacturer: _manufacturerController.text,
+                              softwareVersion: _softwareVersionController.text,
+                              phoneAvatar: _imagePath ?? ""));
+                          Navigator.pop(context);
+                        }
+                      }
+                    }),
+              ],
+            ),
           ),
         ),
       ),

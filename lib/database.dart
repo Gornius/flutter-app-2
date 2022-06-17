@@ -109,4 +109,9 @@ class PhoneDatabase {
         where: "id = ${phone.id}");
     return phone.id;
   }
+
+  static Future<void> deletePhone(Phone phone) async {
+    final phoneDatabase = await openPhoneDatabase();
+    await phoneDatabase.delete(tableName, where: "id = ${phone.id}");
+  }
 }
